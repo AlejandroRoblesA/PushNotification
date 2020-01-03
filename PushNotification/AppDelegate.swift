@@ -7,15 +7,61 @@
 //
 
 import UIKit
+import UserNotifications
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        setupPushNotification(application: application)
         return true
+    }
+    
+    //Setup appdelegate for push notifications
+    func setupPushNotification(application: UIApplication ){
+        
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { (granted, error) in
+            if (granted){
+                DispatchQueue.main.async {
+                    application.registerForRemoteNotifications()
+                }
+            }
+            else{
+                print("User notification permission denied: \(error?.localizedDescription ?? "error")")
+            }
+        }
+    }
+    
+    //MARK: - UNUserNotificationCenterDelegate methods
+    //Successful registration and you have a token. Send your token to your provider, in this case the console for cut and paste
+    //Method 1: - Will register app on apns to receive token
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        print("Successful registration. Token is:")
+        print(tokenString(deviceToken))
+    }
+    
+    //Method 2: - Fail registration. Explain why
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("Fail to register for remote notification: \(error.localizedDescription)")
+    }
+    
+    //Method 3: - In this method app will receive notifications in [userInfo]
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any]) {
+        print(userInfo)
+    }
+    
+    //code to make a token string
+    func tokenString(_ deviceToken: Data) -> String{
+        let bytes = [UInt8](deviceToken)
+        var token = ""
+        for byte in bytes{
+            token += String(format: "%02x", byte)
+        }
+        return token // This token will be passed to your backend that can be written in php, js, .net, etc.
     }
 
     // MARK: UISceneSession Lifecycle
